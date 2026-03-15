@@ -1,213 +1,214 @@
-name: CI/CD Pipeline
+# Marka AI — CI/CD Pipeline
+#
+# This file grows with the project.
+# Uncomment each section as the corresponding layer gets built.
+# Current active: structure check only.
+
+name: CI/CD
 
 on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
-env:
-  # Container Registry
-  REGISTRY: ghcr.io
-  # Image names
-  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend
-  AI_IMAGE: ghcr.io/${{ github.repository }}/ai
-
+# ─────────────────────────────────────────────
+# PHASE 1 — Always runs. Just verifies the repo
+# structure is intact.
+# ─────────────────────────────────────────────
 jobs:
-  # ==========================================
-  # Job 1: Backend CI (Express.js)
-  # ==========================================
-  backend-ci:
-    name: Backend CI
+  structure:
+    name: Repo structure check
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      - name: Run backend linter
-        working-directory: ./backend
-        run: npm run lint
-
-      - name: Run backend tests
-        working-directory: ./backend
-        run: npm test
-
-      - name: Build backend
-        working-directory: ./backend
-        run: npm run build
-
-  # ==========================================
-  # Job 2: Frontend CI (React/Next.js)
-  # ==========================================
-  frontend-ci:
-    name: Frontend CI
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Run frontend linter
-        working-directory: ./frontend
-        run: npm run lint
-
-      - name: Run frontend tests
-        working-directory: ./frontend
-        run: npm test
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
-
-  # ==========================================
-  # Job 3: AI Backend CI (FastAPI/Python)
-  # ==========================================
-  ai-ci:
-    name: AI Backend CI
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install AI dependencies
-        working-directory: ./ai
+      - name: Check required files exist
         run: |
-          pip install --upgrade pip
-          uv sync
+          required=(
+            "AGENTS.md"
+            "README.md"
+            "plan.md"
+            "feature_log.md"
+            ".env.example"
+          )
+          missing=()
+          for f in "${required[@]}"; do
+            [ ! -f "$f" ] && missing+=("$f")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required files:"
+            printf ' - %s\n' "${missing[@]}"
+            exit 1
+          fi
+          echo "All required files present."
 
-      - name: Run AI linter (ruff)
-        working-directory: ./ai
-        run: uv run ruff check .
+# ─────────────────────────────────────────────
+# PHASE 2A — Uncomment when backend/ has code.
+# Requires: backend/package.json with lint + test scripts.
+# ─────────────────────────────────────────────
+#  express:
+#    name: Express — lint & test
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: backend
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: 20
+#          cache: npm
+#          cache-dependency-path: backend/package-lock.json
+#
+#      - name: Install dependencies
+#        run: npm ci
+#
+#      - name: Lint
+#        run: npm run lint
+#
+#      - name: Test
+#        run: npm test
+#        env:
+#          NODE_ENV: test
+#          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+#          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+#          REDIS_URL: ${{ secrets.TEST_REDIS_URL }}
 
-      - name: Run AI tests
-        working-directory: ./ai
-        run: uv run pytest tests/ -v
+# ─────────────────────────────────────────────
+# PHASE 2B — Uncomment when frontend/ has code.
+# Requires: frontend/package.json with lint + test scripts.
+# ─────────────────────────────────────────────
+#  react:
+#    name: React — lint & test
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: frontend
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version: 20
+#          cache: npm
+#          cache-dependency-path: frontend/package-lock.json
+#
+#      - name: Install dependencies
+#        run: npm ci
+#
+#      - name: Lint
+#        run: npm run lint
+#
+#      - name: Test
+#        run: npm test
 
-      - name: Build AI backend
-        working-directory: ./ai
-        run: uv run fastapi dev
+# ─────────────────────────────────────────────
+# PHASE 2C — Uncomment when ai/ has code.
+# Requires: ai/pyproject.toml with ruff + pytest configured.
+# ─────────────────────────────────────────────
+#  fastapi:
+#    name: FastAPI — lint & test
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: ai
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.12'
+#
+#      - name: Install uv
+#        run: pip install uv
+#
+#      - name: Install dependencies
+#        run: uv sync
+#
+#      - name: Lint
+#        run: uv run ruff check .
+#
+#      - name: Type check
+#        run: uv run pyright
+#
+#      - name: Test
+#        run: uv run pytest --cov
+#        env:
+#          AI_SERVICE_KEY: ${{ secrets.AI_SERVICE_KEY }}
+#          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+#          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+#          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
 
-  # ==========================================
-  # Job 4: Build Docker Images
-  # ==========================================
-  build-images:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [backend-ci, frontend-ci, ai-ci]
+# ─────────────────────────────────────────────
+# PHASE 3 — Uncomment when all three layers pass CI
+# AND Dockerfiles exist.
+# Runs only on push to main (not PRs).
+# ─────────────────────────────────────────────
+#  build:
+#    name: Build & push Docker images
+#    runs-on: ubuntu-latest
+#    needs: [express, react, fastapi]
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    permissions:
+#      contents: read
+#      packages: write
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Log in to GitHub Container Registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Build and push Express image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./backend
+#          file: ./docker/backend/Dockerfile
+#          push: true
+#          tags: ghcr.io/${{ github.repository }}/backend:latest
+#
+#      - name: Build and push React image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./frontend
+#          file: ./docker/frontend/Dockerfile
+#          push: true
+#          tags: ghcr.io/${{ github.repository }}/frontend:latest
+#
+#      - name: Build and push FastAPI image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./ai
+#          file: ./docker/ai/Dockerfile
+#          push: true
+#          tags: ghcr.io/${{ github.repository }}/ai:latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # ==========================================
-      # Build Backend Image
-      # ==========================================
-      - name: Build Backend Image
-        working-directory: ./backend
-        run: |
-          docker build -t ${{ env.BACKEND_IMAGE }}:latest .
-          docker tag ${{ env.BACKEND_IMAGE }}:latest ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-
-      # ==========================================
-      # Build Frontend Image
-      # ==========================================
-      - name: Build Frontend Image
-        working-directory: ./frontend
-        run: |
-          docker build -t ${{ env.FRONTEND_IMAGE }}:latest .
-          docker tag ${{ env.FRONTEND_IMAGE }}:latest ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-
-      # ==========================================
-      # Build AI Image
-      # ==========================================
-      - name: Build AI Image
-        working-directory: ./ai
-        run: |
-          docker build -t ${{ env.AI_IMAGE }}:latest .
-          docker tag ${{ env.AI_IMAGE }}:latest ${{ env.AI_IMAGE }}:${{ github.sha }}
-
-      # ==========================================
-      # Push Images to Registry
-      # ==========================================
-      - name: Push Backend Image
-        run: |
-          docker push ${{ env.BACKEND_IMAGE }}:latest
-          docker push ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-
-      - name: Push Frontend Image
-        run: |
-          docker push ${{ env.FRONTEND_IMAGE }}:latest
-          docker push ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-
-      - name: Push AI Image
-        run: |
-          docker push ${{ env.AI_IMAGE }}:latest
-          docker push ${{ env.AI_IMAGE }}:${{ github.sha }}
-
-  # ==========================================
-  # Job 5: Deploy to VPS (if push to main)
-  # ==========================================
-  deploy:
-    name: Deploy to VPS
-    runs-on: ubuntu-latest
-    needs: [build-images]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy script
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.GITHUB_ACTIONS_DEPLOY_KEY }}
-          script: |
-            echo "Starting deployment..."
-            cd /opt/marka-ai
-            git pull origin main
-            docker compose pull
-            docker compose up -d --build
-            echo "Deployment complete!"
+# ─────────────────────────────────────────────
+# PHASE 4 — Uncomment when you're ready to deploy
+# to VPS. Requires Phase 3 to be active.
+# GitHub Secrets required:
+#   VPS_HOST, VPS_USER, GITHUB_ACTIONS_DEPLOY_KEY
+# ─────────────────────────────────────────────
+#  deploy:
+#    name: Deploy to VPS
+#    runs-on: ubuntu-latest
+#    needs: [build]
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    steps:
+#      - name: SSH deploy
+#        uses: appleboy/ssh-action@v1
+#        with:
+#          host: ${{ secrets.VPS_HOST }}
+#          username: ${{ secrets.VPS_USER }}
+#          key: ${{ secrets.GITHUB_ACTIONS_DEPLOY_KEY }}
+#          script: |
+#            cd /opt/marka-ai
+#            git pull origin main
+#            docker compose pull
+#            docker compose up -d
+#            docker compose ps
