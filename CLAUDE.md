@@ -279,6 +279,28 @@ const response = await fetch('http://ai:8000/ai/generate', {
 
 ## Environment Variables
 
+### Root Configuration
+
+Copy the root `.env.example` to `.env` and configure values:
+
+```bash
+cp .env.example .env
+# Edit .env with your actual keys and values
+```
+
+The root `.env.example` documents all shared environment variables across services:
+- `JWT_SECRET` - Must be identical in all services
+- `AI_SERVICE_KEY` - Service key for Express → FastAPI communication
+- `POSTGRES_*` - PostgreSQL database configuration
+- `REDIS_*` - Redis cache/queue configuration
+- `OPENAI_API_KEY` - OpenAI API key
+- `PINECONE_API_KEY` - Pinecone vector database key
+
+Service-specific `.env.example` files exist in each directory:
+- `backend/.env.example` - Express-specific variables
+- `frontend/.env.example` - React/Next.js variables
+- `ai/.env.example` - FastAPI-specific variables
+
 ### Required for Local Development
 
 **Backend (.env)**

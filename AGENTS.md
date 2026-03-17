@@ -22,6 +22,18 @@
 
 ## Quick Start
 
+### 0. Environment Setup
+```bash
+# Copy root .env.example to .env and configure values
+cp .env.example .env
+# Edit .env with your actual keys and values
+```
+
+Service-specific `.env.example` files exist in:
+- `backend/.env.example` (Express)
+- `frontend/.env.example` (React)
+- `ai/.env.example` (FastAPI)
+
 ### 1. API Gateway (Express)
 ```bash
 cd backend
@@ -64,7 +76,7 @@ zensical build    # generate static site into /docs
 - No route in either service is unprotected.
 - React never calls FastAPI directly. React never calls `fetch` outside of `src/api/`.
 
-Full architecture rules → [`AGENTS.md`](./AGENTS.md)
+Full project reference → [`CLAUDE.md`](./CLAUDE.md)
 
 ---
 
