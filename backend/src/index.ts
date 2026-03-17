@@ -20,5 +20,5 @@ app.use('/api/v1/hello', helloRoutes)
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-  console.log(`Express running on :${PORT}`)
+  console.log(`Express running on port :${PORT}`)
 })

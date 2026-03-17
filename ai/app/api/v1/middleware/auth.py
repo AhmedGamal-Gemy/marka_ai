@@ -1,6 +1,9 @@
 import os
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 JWT_SECRET = os.environ["JWT_SECRET"]
 SERVICE_KEY = os.environ["AI_SERVICE_KEY"]
