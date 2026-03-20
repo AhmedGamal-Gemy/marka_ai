@@ -1,6 +1,19 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 
+// Extend Express Request type to include user property
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string
+        email: string
+        plan: string
+      }
+    }
+  }
+}
+
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization
 
