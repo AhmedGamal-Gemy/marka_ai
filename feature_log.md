@@ -21,6 +21,10 @@ Tracks shipped features, in-progress work, and what's planned next.
 
 | Status | Owner | Feature | Notes |
 |---|---|---|---|
+| ✅ 2026-03-19 | ⬜ | Docker Compose setup | All services containerized with one-command startup |
+| ✅ 2026-03-19 | ⬜ | Health checks | All services have working health endpoints |
+| ✅ 2026-03-19 | ⬜ | Environment configuration | .env file with all required variables |
+| ✅ 2026-03-20 | ⬜ | Documentation sync | All docs updated with correct port mappings and versions |
 | 📋 | ⬜ | Customer discovery interviews | Target 20+ SME owners |
 | 📋 | ⬜ | Competitive audit | Arabic.AI, Qalam.ai, Jasper, ChatGPT |
 | 📋 | ⬜ | ORM decision | Prisma vs Sequelize |
