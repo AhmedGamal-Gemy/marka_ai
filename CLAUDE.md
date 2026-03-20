@@ -2,15 +2,77 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Quick Start with Docker
+
+### Linux / macOS / WSL2
+
+**The fastest way to run all services:**
+
+```bash
+docker compose up -d
+```
+
+This will start:
+- Frontend (React) on http://localhost:5173
+- Backend API (Express) on http://localhost:3000
+- AI Backend (FastAPI) on http://localhost:8001
+- PostgreSQL database on localhost:5432
+- Redis cache on localhost:6380
+
+### Windows (Docker Desktop)
+
+**IMPORTANT**: On Windows, Docker Compose works best from WSL2 due to path and file system issues.
+
+```powershell
+# Option 1: Open WSL and run there
+wsl
+
+# Then inside WSL:
+cd /mnt/d/AHMED_DATA/Projects/marka_ai
+docker compose up -d
+```
+
+```powershell
+# Option 2: Single command from PowerShell
+wsl -d Ubuntu -- cd /mnt/d/AHMED_DATA/Projects/marka_ai && docker compose up -d
+```
+
+**Why WSL2?**
+- Docker Desktop uses WSL2 backend on Windows
+- Running `docker compose` from PowerShell causes build context and path issues
+- WSL2 provides proper Linux filesystem for Docker builds
+
+**Check if WSL2 is installed**:
+```powershell
+wsl --list --verbose
+```
+
+If WSL2 is not installed, run:
+```powershell
+wsl --install
+```
+
 ## Project Overview
 
 Marka AI is an Arabic-first AI marketing automation platform for Egyptian and MENA SMEs. It uses a three-layer architecture:
 
-- **Frontend**: React/Next.js (port 5173)
+- **Frontend**: React/Next.js (port 5173 externally, 3000 internally)
 - **API Gateway**: Express.js (Node.js, port 3000) — handles auth, CRUD, database, streaming
-- **AI Backend**: FastAPI (Python, port 8000) — internal-only service for agents, RAG, LLM operations
+- **AI Backend**: FastAPI (Python, port 8001 externally, 8000 internally) — internal-only service for agents, RAG, LLM operations
 
-**Critical**: FastAPI is never exposed to the internet. All requests go through Express, which proxies to FastAPI.
+**Critical**: FastAPI is never exposed to internet. All requests go through Express, which proxies to FastAPI.
+
+## Service Port Mappings
+
+| Service | Host Port | Container Port | Internal Access |
+|---------|-----------|----------------|----------------|
+| Frontend (Next.js) | 5173 | 3000 | `http://frontend:3000` |
+| Backend (Express) | 3000 | 3000 | `http://backend:3000` |
+| AI Backend (FastAPI) | 8001 | 8000 | `http://ai:8000` |
+| PostgreSQL | 5432 | 5432 | `postgres://postgres:5432/marka_db` |
+| Redis | 6380 | 6379 | `redis://redis:6379` |
+
+**Note**: When services communicate within Docker network, use container ports and service names (e.g., `http://ai:8000`). When accessing from host machine, use host ports.
 
 ## Common Development Commands
 
@@ -118,7 +180,7 @@ cd ai && uv run pytest
 
 ### Database Schema Ownership
 
-PostgreSQL schema is owned by Express. FastAPI does not modify the database schema directly. Any database changes must go through Express migrations.
+PostgreSQL schema is owned by Express. FastAPI does not modify database schema directly. Any database changes must go through Express migrations.
 
 ## Critical Architecture Rules
 
@@ -367,7 +429,7 @@ uv remove <package>   # Remove dependency
 ### Code Style
 - ESLint configured for both backend and frontend
 - TypeScript strict mode enabled
-- Node.js >= 20 required
+- Node.js >= 22 required
 
 ### Testing
 - Jest for unit tests
@@ -432,7 +494,7 @@ The project includes Python development skills in `.agents/skills/`:
 - `python-type-safety` - Type checking and type hints
 - `python-design-patterns` - Design patterns for Python
 
-These skills are automatically loaded when working on the AI backend (FastAPI) code.
+These skills are automatically loaded when working on AI backend (FastAPI) code.
 
 ## Common Issues
 
@@ -454,7 +516,7 @@ These skills are automatically loaded when working on the AI backend (FastAPI) c
 ### Port Conflicts
 **Problem**: Services fail to start due to port already in use
 
-**Solution**: Check ports 3000 (Express), 5173 (Frontend), 8000 (FastAPI), 5432 (PostgreSQL), 6379 (Redis) are available
+**Solution**: Check ports 3000 (Express), 5173 (Frontend), 8001 (FastAPI external), 8000 (FastAPI internal), 5432 (PostgreSQL), 6380 (Redis external), 6379 (Redis internal) are available
 
 ## Testing the Stack
 
@@ -466,7 +528,7 @@ docker compose up -d
 
 # 2. Check health endpoints
 curl http://localhost:3000/health     # Express
-curl http://localhost:8000/health     # FastAPI
+curl http://localhost:8001/health     # FastAPI
 
 # 3. Check auth chain (requires valid JWT)
 curl http://localhost:3000/api/v1/hello

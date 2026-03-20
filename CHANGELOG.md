@@ -10,6 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Complete Docker Compose setup for one-command deployment
+- Windows/WSL2 documentation for Docker Desktop on Windows
+- WSL2 installation and usage instructions
+- One-command docker compose up from WSL2
+- All services (Express, FastAPI, React, PostgreSQL, Redis) containerized
+- Multi-stage Dockerfiles for production builds
+- Health checks for all services
+- Environment variable configuration with .env file
+- .dockerignore for faster builds
+- Service port mappings table documenting host vs container ports
+- Docker network configuration for inter-service communication
+
+### Changed
+- Node.js updated to version 22 (latest LTS)
+- Python updated to version 3.13
+- PostgreSQL updated to version 17
+- Redis updated to version 8
+- Removed obsolete docker-compose version field
+- Fixed healthcheck commands for proper shell execution
+- Updated CI/CD workflow to use Node 22 (was 20) and Python 3.13 (was 3.12)
+- Docker build context paths in CI/CD (now uses root context with file parameter)
+- Port mappings: Frontend uses host:5173→container:3000, AI Backend uses host:8001→container:8000, Redis uses host:6380→container:6379
+
+### Fixed
+- npm ci replaced with npm install (no lockfiles required)
+- AI Dockerfile FastAPI command path fixed (app/main.py instead of ai/app/main.py)
+- Service-to-service communication configured with AI_SERVICE_KEY and JWT_SECRET
+
+---
+
+## [0.1.0] - 2026-03-15
+
+### Added
 - Project foundation with architecture defined in AGENTS.md
 - Three-phase development plan (Validation, MVP, Pilot, Scale)
 - Feature tracking system with status symbols

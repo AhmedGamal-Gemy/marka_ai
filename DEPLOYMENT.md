@@ -92,8 +92,8 @@ sudo apt install -y docker-compose-plugin
 
 ### 4. Verify Installation
 ```bash
-docker --version      # Should show Docker version 20.10+
-docker compose version # Should show Compose version 2.0+
+docker --version      # Should show Docker version 25.0+
+docker compose version # Should show Compose version 2.20+
 ```
 
 ### 5. Create Application Directory
@@ -144,6 +144,28 @@ cat ~/.ssh/github_actions_deploy.pub
 
 ## Local Development
 
+### Windows with Docker Desktop
+
+**IMPORTANT**: On Windows, always run Docker Compose from WSL2 to avoid build context and path issues.
+
+```powershell
+# Open WSL2
+wsl
+
+# Navigate to project in WSL
+cd /mnt/d/AHMED_DATA/Projects/marka_ai
+
+# Start all services
+docker compose up -d
+```
+
+Or from PowerShell in one command:
+```powershell
+wsl -d Ubuntu -- cd /mnt/d/AHMED_DATA/Projects/marka_ai && docker compose up -d
+```
+
+### Linux / macOS
+
 ### 1. Clone Repository
 ```bash
 git clone https://github.com/YOUR_USERNAME/marka-ai.git
@@ -157,6 +179,8 @@ cp .env.example .env
 nano .env
 ```
 
+**Note**: A `.env` file is now included in the project. Docker Compose will automatically load it from the root directory.
+
 ### 3. Start All Services
 ```bash
 docker compose up -d
@@ -169,11 +193,18 @@ docker compose logs -f
 ```
 
 ### 5. Access Services
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3000
-- AI Backend: http://localhost:8000
-- PostgreSQL: localhost:5432
-- Redis: localhost:6379
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:3000/health |
+| AI Backend | http://localhost:8001/health |
+| PostgreSQL | localhost:5432 |
+| Redis | localhost:6380 |
+
+**Note**: These are host ports. Internally (in Docker network), services use different ports:
+- Frontend container: port 3000
+- AI Backend container: port 8000
+- Redis container: port 6379
 
 ---
 
@@ -318,7 +349,7 @@ docker compose down -v  # Also remove volumes
 All services have health checks:
 - Backend: http://localhost:3000/health
 - Frontend: http://localhost:5173
-- AI Backend: http://localhost:8000/health
+- AI Backend: http://localhost:8001/health
 - PostgreSQL: Database connection
 - Redis: PING command
 
@@ -376,4 +407,4 @@ docker exec -i marka-postgres psql -U marka_user marka_db < backup.sql
 
 ---
 
-For more help, check the main [README.md](../README.md) or [AGENTS.md](../AGENTS.md).
+For more help, check main [README.md](../README.md) or [AGENTS.md](../AGENTS.md).

@@ -1,13 +1,13 @@
 # ==========================================
 # Stage 1: Development
 # ==========================================
-FROM node:20-alpine AS development
+FROM node:22-alpine AS development
 
 WORKDIR /app
 
 # Install dependencies
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install 
 
 # Copy source code
 COPY frontend/ .
@@ -21,13 +21,13 @@ CMD ["npm", "run", "dev"]
 # ==========================================
 # Stage 2: Production Build
 # ==========================================
-FROM node:20-alpine AS production-build
+FROM node:22-alpine AS production-build
 
 WORKDIR /app
 
 # Install dependencies only
 COPY frontend/package*.json ./
-RUN npm ci --only=production
+RUN npm install 
 
 # Copy source code
 COPY frontend/ .
@@ -38,7 +38,7 @@ RUN npm run build
 # ==========================================
 # Stage 3: Production Image
 # ==========================================
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
@@ -60,7 +60,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "const http=require('http');http.get('http://localhost:3000',(r)=>process.exit(r.statusCode===200?0:1))"
 
 # Start production server
 CMD ["npm", "start"]

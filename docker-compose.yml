@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   # ==========================================
   # API Gateway (Express.js Backend)
   # ==========================================
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: docker/backend/Dockerfile
       target: production
     container_name: marka-backend
     restart: unless-stopped
@@ -15,6 +14,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_key}
+      AI_SERVICE_KEY: ${AI_SERVICE_KEY:-dev_ai_service_key}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: marka_user
@@ -28,7 +29,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD-SHELL", "node -e \"const http=require('http');http.get('http://localhost:3000/health',(r)=>process.exit(r.statusCode===200?0:1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,7 +42,8 @@ services:
   # ==========================================
   frontend:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: docker/frontend/Dockerfile
       target: production
     container_name: marka-frontend
     restart: unless-stopped
@@ -50,11 +52,12 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://localhost:3000/api/v1
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3000/api
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD-SHELL", "node -e \"const http=require('http');http.get('http://localhost:3000',(r)=>process.exit(r.statusCode===200?0:1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,14 +70,17 @@ services:
   # ==========================================
   ai:
     build:
-      context: ./ai
+      context: .
+      dockerfile: docker/ai/Dockerfile
       target: production
     container_name: marka-ai
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       PYTHONUNBUFFERED: 1
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_key}
+      AI_SERVICE_KEY: ${AI_SERVICE_KEY:-dev_ai_service_key}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: marka_user
@@ -90,7 +96,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').status == 200"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -102,7 +108,7 @@ services:
   # PostgreSQL Database
   # ==========================================
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: marka-postgres
     restart: unless-stopped
     environment:
@@ -126,16 +132,16 @@ services:
   # Redis Cache
   # ==========================================
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: marka-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping"]
       interval: 10s
       timeout: 5s
       retries: 5
