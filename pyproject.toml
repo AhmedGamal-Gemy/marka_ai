@@ -1,0 +1,10 @@
+[project]
+name = "marka-ai-docs"
+version = "0.1.0"
+description = "Marka AI Documentation - powered by Zensical"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "watchfiles>=0.21.0",
+]
