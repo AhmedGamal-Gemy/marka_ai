@@ -1,10 +1,19 @@
 [project]
-name = "marka-ai-docs"
+name = "marka-ai"
 version = "0.1.0"
-description = "Marka AI Documentation - powered by Zensical"
+description = "Add your description here"
+readme = "README.md"
 requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.135.2",
+    "litellm[proxy]>=1.82.6",
+    "pydantic>=2.12.5",
+    "python-telegram-bot>=22.7",
+]
 
 [dependency-groups]
 dev = [
-    "watchfiles>=0.21.0",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "ruff>=0.15.7",
 ]
