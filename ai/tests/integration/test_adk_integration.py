@@ -1,11 +1,13 @@
 import asyncio
 import os
+import pytest
 from app.services.llm_service import LLMService
 from app.models.enums import AgentRole
 from google.adk import Agent, Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
+@pytest.mark.asyncio
 async def test_agent():
     print("--- 1. Forcing Environment Variables ---")
     os.environ["LLM_API_KEY"] = "AIzaSyAuAqQ6Y9ipMEqiukyfqCWprDT5H22NjNs"
