@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-03-27
+### Added
+- Google ADK (Agent Development Kit) core integration.
+- Unified `LLMService` for providing ADK models to agents.
+- `AgentRole` Enum to eliminate magic strings in model selection.
+- Automatic API Key mapping for LiteLLM/ADK (`GEMINI_API_KEY`, `GOOGLE_API_KEY`).
+- Structured test suite (Unit & Integration) for LLM layer.
+- Comprehensive root-level `.gitignore` for professional repository management.
+- Architectural documentation for the LLM layer.
+
+## [0.2.0] - 2026-03-20
+### Added
+- Complete Docker Compose orchestration for all services.
+- Multi-stage production Dockerfiles for all layers.
+- Health checks and service dependencies configured.
 
 ## [0.1.0] - 2026-03-26
 ### Added
