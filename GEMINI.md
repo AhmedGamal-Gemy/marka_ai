@@ -17,7 +17,11 @@ The system is built as a Two-Layer Architecture:
     *   **Core:** FastAPI, Pydantic, python-telegram-bot.
     *   **State & Memory:** MongoDB (Structured data: brand memories, job history).
     *   **RAG (Retrieval-Augmented Generation):** Qdrant (Vector embeddings for semantic search).
-    *   **LLM Interface:** LiteLLM (configured to use `google/gemini-2.0-flash` for agents and `google/text-embedding-004` for embeddings).
+    *   **LLM Interface (Smart Strategy):** LiteLLM configured as:
+        *   **Orchestrator:** `google/gemini-3-flash` (Smart tool caller)
+        *   **Content Agent:** `google/gemini-3.1-pro` (Egyptian Arabic copy)
+        *   **RAG/Chatbot:** `google/gemini-3.1-flash-lite` (Fast workers)
+        *   **Embeddings:** `google/gemini-embedding-2`
     *   **Agents:** Orchestrator (routing), RAG Agent (brand context), Chatbot Agent (intent parsing), Content Agent (Arabic copy generation).
 2.  **Frontend Layer:**
     *   Telegram Bot + React UI.
@@ -104,6 +108,35 @@ This project strictly enforces modern Python engineering standards. When writing
 ### 5. Project Structure (`python-project-structure`)
 - **Modularity:** Keep agent logic separate from API routing and data access layers.
 
+## 🏃‍♂️ Sprint 1: Execution Plan (Infrastructure & Foundation)
+**Goal:** Establish the monorepo structure, Docker environment, and base FastAPI configuration.
+
+### 📋 Task Checklist
+- [ ] **T001: Repository Setup** — Create `ai/`, `bot/`, and `web/` directories.
+- [ ] **T002: Docker Compose** — Create `docker-compose.yml` with health checks.
+- [ ] **T003/T004: DB Setup** — Configure MongoDB and Qdrant containers.
+- [ ] **T005: FastAPI Base** — Initialize `ai/app/main.py` and `ai/app/config.py`.
+- [ ] **T006: Environment** — Create `.env.example`.
+- [ ] **T008: Git Strategy** — Ensure `main`, `develop`, and `feature/` branches are ready.
+
+### 🛠 Implementation Guide
+
+#### 1. Folder Structure
+Follow the structure in `MARKA_AI_Technical_Document.md` Section 10.1. Keep `ai/` logic separate from `bot/` and `web/`.
+
+#### 2. Model Mapping (Smart Orchestrator)
+Ensure `ai/app/config.py` uses:
+- Orchestrator: `google/gemini-3-flash`
+- Content Agent: `google/gemini-3.1-pro`
+- Fast Workers: `google/gemini-3.1-flash-lite`
+
+#### 3. Inter-Component Auth
+Implement the `X-API-Token` header validation in `ai/app/middleware/auth.py`. 
+
+#### 4. Startup Sequence
+The `bot` and `web` services MUST use `depends_on` with `service_healthy` conditions for the `fastapi` service.
+
+---
 ## 🤖 AI Interaction Guidelines
 - **Always Read the Skills:** Before making architectural decisions or writing complex logic, consult the relevant skill markdown files in `.agents/skills/`.
 - **Align with v1 Architecture:** Ensure all new code respects the defined split between Orchestrator, RAG, Chatbot, and Content agents. Do not blur the lines of responsibility.

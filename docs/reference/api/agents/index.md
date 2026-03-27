@@ -1,3 +1,0 @@
-# Agents
-
-::: app.agents
