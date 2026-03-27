@@ -1,0 +1,55 @@
+<h2>Orchestrator Agent: v1 Intent Flow</h2>
+<p class="subtitle">Intent-based routing strategy for initial stability</p>
+
+<div class="section">
+  <h3>1. Intent Parsing</h3>
+  <p>The Orchestrator receives the user message and first categorizes it into one of the following intents:</p>
+  <ul>
+    <li><strong>GREETING:</strong> Casual chat or help request.</li>
+    <li><strong>GENERATE_POST:</strong> Explicit request to create a marketing post.</li>
+    <li><strong>BRAND_QUERY:</strong> Questions about the user's business or products.</li>
+    <li><strong>UNKNOWN:</strong> Fallback for ambiguous inputs.</li>
+  </ul>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Decision Flow Diagram</div>
+  <div class="mockup-body" style="background: #f8f9fa; padding: 1rem; border-radius: 4px;">
+    <pre style="font-family: monospace; line-height: 1.4;">
+[User Message]
+      |
+      v
+[LLM: Intent Parser] (Gemini 3 Flash)
+      |
+      +-------------------+-------------------+
+      |                   |                   |
+      v                   v                   v
+[GREETING]          [GENERATE_POST]      [BRAND_QUERY]
+      |                   |                   |
+      v                   v                   v
+[Chatbot Agent]     [Content Agent]      [RAG Agent]
+(Flash Lite)         (3.1 Pro)           (Flash Lite)
+    </pre>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Which approach feels right for the prompt instructions?</h3>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="strict" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Strict Intent Parsing</h3>
+      <p>Force the LLM to output ONLY the intent name. Higher reliability, less conversational flex.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="flexible" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Flexible Reasoning</h3>
+      <p>Let the LLM explain its reasoning before picking the intent. Better for complex edge cases.</p>
+    </div>
+  </div>
+</div>

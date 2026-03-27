@@ -9,10 +9,8 @@ from google.genai import types
 
 @pytest.mark.asyncio
 async def test_agent():
-    print("--- 1. Forcing Environment Variables ---")
-    os.environ["LLM_API_KEY"] = "AIzaSyAuAqQ6Y9ipMEqiukyfqCWprDT5H22NjNs"
-    os.environ["GEMINI_API_KEY"] = "AIzaSyAuAqQ6Y9ipMEqiukyfqCWprDT5H22NjNs"
-    os.environ["ORCHESTRATOR_MODEL"] = "gemini/gemini-3-flash-preview"
+    print("--- 1. Testing Environment ---")
+    # API Key is pulled automatically from .env via get_settings()
     
     print("--- 2. Initializing LLM Service ---")
     service = LLMService()

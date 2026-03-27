@@ -1,0 +1,59 @@
+<h2>Reasoning Implementation: Visual Comparison</h2>
+<p class="subtitle">How each approach looks in your logs and code</p>
+
+<div class="cards">
+  <div class="card" data-choice="cot" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; font-family: monospace; font-size: 0.85rem;">
+      <span style="color: #6a9955;"># Log Output:</span><br>
+      > User: "I want to sell my new watch"<br>
+      > LLM:<br>
+      1. User mentions 'sell' and 'new watch'.<br>
+      2. This is a request for content creation.<br>
+      3. Setting intent to GENERATE_POST.<br>
+      Intent: GENERATE_POST
+    </div>
+    <div class="card-body">
+      <h3>A) Chain-of-Thought</h3>
+      <p>Natural text flow. Great for debugging, but requires string parsing in Python.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="pydantic" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #1e1e1e; color: #ce9178; padding: 1rem; font-family: monospace; font-size: 0.85rem;">
+      <span style="color: #6a9955;">// Structured JSON:</span><br>
+      {<br>
+      &nbsp;&nbsp;"reasoning": "User expressed a clear desire to create a listing for a watch.",<br>
+      &nbsp;&nbsp;"intent": "GENERATE_POST"<br>
+      }
+    </div>
+    <div class="card-body">
+      <h3>B) Pydantic Schema</h3>
+      <p>Structured JSON. Native Pydantic validation. Zero parsing errors. (Recommended)</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="native" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; font-family: monospace; font-size: 0.85rem;">
+      <span style="color: #6a9955;">// API Metadata:</span><br>
+      thoughts_token_count: 85<br>
+      <br>
+      <span style="color: #6a9955;">// Final Text:</span><br>
+      GENERATE_POST
+    </div>
+    <div class="card-body">
+      <h3>C) Native Thinking</h3>
+      <p>Cleanest output. Reasoning is "hidden" in metadata. Hardest to debug visually.</p>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Why B is best for Marka AI</h4>
+    <ul>
+      <li>Type-safe (matches your Enums)</li>
+      <li>Reliable tool routing</li>
+      <li>Easy to log to MongoDB</li>
+    </ul>
+  </div>
+</div>
