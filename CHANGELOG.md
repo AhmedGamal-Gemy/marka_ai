@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-03-27
+### Added
+- Core `LLMService` providing a unified interface for all agents.
+- Native integration with **Google Agent Development Kit (ADK)** using `LiteLlm` model wrapper.
+- `AgentRole` Enum to eliminate magic strings in model selection.
+- Asynchronous integration test suite for verifying Gemini API connectivity.
+- Documentation for running integration tests.
+
+### Fixed
+- Standardized model naming to use `gemini/` prefix for AI Studio compatibility.
+- Updated model strings with `-preview` suffix for Gemini 3 series.
+
 ## [0.1.0] - 2026-03-26
 ### Added
 - Initial monorepo structure (`ai/`, `bot/`, `web/`).

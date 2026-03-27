@@ -137,6 +137,55 @@ Implement the `X-API-Token` header validation in `ai/app/middleware/auth.py`.
 The `bot` and `web` services MUST use `depends_on` with `service_healthy` conditions for the `fastapi` service.
 
 ---
+## 🧠 LLM Implementation Rules
+
+### 1. Model Naming Convention (LiteLLM + ADK)
+When using the `LLMService` to get models, follow these string formats in `.env`:
+- **Google AI Studio (Primary):** MUST use the `gemini/` prefix (e.g., `gemini/gemini-3-flash-preview`).
+- **Google Cloud Vertex:** Use the `vertex_ai/` prefix.
+- **Gemini 3 Series:** Always include the `-preview` suffix (e.g., `gemini-3-flash-preview`) until they reach General Availability.
+
+### 2. Environment Variable Priority
+- **API Key:** Use `LLM_API_KEY` in the root `.env`.
+- **Internal Mapping:** `LLMService` automatically maps this to `GEMINI_API_KEY` and `GOOGLE_API_KEY` for ADK/LiteLLM compatibility.
+
+### 3. Google ADK "Runner" Pattern
+ADK agents cannot be run with a simple `.run()` method. You MUST use the `Runner` with a `SessionService`.
+
+**Correct Pattern:**
+```python
+from google.adk import Agent, Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
+
+# 1. Setup
+session_service = InMemorySessionService()
+llm_service = LLMService()
+
+# 2. Initialize Runner
+async with Runner(
+    app_name="MarkaAI",
+    agent=my_agent, 
+    session_service=session_service,
+    auto_create_session=True
+) as runner:
+    # 3. Format input using official google-genai types
+    message = types.Content(
+        role="user", 
+        parts=[types.Part.from_text(text="Your message here")]
+    )
+    
+    # 4. Stream results
+    async for event in runner.run_async(
+        user_id="user_id",
+        session_id="session_id",
+        new_message=message
+    ):
+        if hasattr(event, "text") and event.text:
+            print(event.text)
+```
+
+---
 ## 🤖 AI Interaction Guidelines
 - **Always Read the Skills:** Before making architectural decisions or writing complex logic, consult the relevant skill markdown files in `.agents/skills/`.
 - **Align with v1 Architecture:** Ensure all new code respects the defined split between Orchestrator, RAG, Chatbot, and Content agents. Do not blur the lines of responsibility.

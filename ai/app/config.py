@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = ""
     
     # Model variables matching `.env.example`
-    ORCHESTRATOR_MODEL: str = "google/gemini-3-flash"
-    CONTENT_MODEL: str = "google/gemini-3.1-pro"
-    RAG_MODEL: str = "google/gemini-3.1-flash-lite"
-    CHATBOT_MODEL: str = "google/gemini-3.1-flash-lite"
-    EMBEDDING_MODEL: str = "google/gemini-embedding-2"
+    ORCHESTRATOR_MODEL: str = "gemini/gemini-3-flash-preview"
+    CONTENT_MODEL: str = "gemini/gemini-3.1-pro-preview"
+    RAG_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
+    CHATBOT_MODEL: str = "gemini/gemini-3.1-flash-lite-preview"
+    EMBEDDING_MODEL: str = "gemini/gemini-embedding-2"
     
     LLM_REQUESTS_PER_MINUTE: int = 25
 
