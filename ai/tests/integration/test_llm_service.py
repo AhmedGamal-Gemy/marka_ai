@@ -1,43 +1,41 @@
 import os
 import pytest
+from typing import Union
 from app.services.llm_service import LLMService
 from app.models.enums import AgentRole
-from google.adk.models.lite_llm import LiteLlm
-from app.config import get_settings
+from google.adk.models import Gemini, LiteLlm
+from app.config import get_settings, Settings
 
-def test_llm_service_initialization_injects_env_vars():
-    # Store original env vars
-    original_gemini = os.environ.get("GEMINI_API_KEY")
-    original_google = os.environ.get("GOOGLE_API_KEY")
+def test_llm_service_initialization_uses_settings_object(settings):
+    """Verifies that LLMService correctly uses the provided settings object."""
+    service = LLMService(settings=settings)
+    assert service.settings == settings
+
+def test_llm_service_initialization_with_custom_settings():
+    """Verifies that LLMService can be initialized with custom settings."""
+    custom_settings = Settings(LLM_API_KEY="custom-test-key")
+    service = LLMService(settings=custom_settings)
+    assert service.settings.LLM_API_KEY == "custom-test-key"
+    assert service.settings == custom_settings
+
+def test_get_adk_model_returns_correct_gemini_object(settings):
+    """Verifies that get_adk_model returns a Gemini instance for Google models."""
+    service = LLMService(settings=settings)
     
-    try:
-        # Clear existing env vars
-        if "GEMINI_API_KEY" in os.environ:
-            del os.environ["GEMINI_API_KEY"]
-        if "GOOGLE_API_KEY" in os.environ:
-            del os.environ["GOOGLE_API_KEY"]
-            
-        settings = get_settings()
-        # Mocking settings if possible, or just trust the current environment
-        # but let's assume we can set LLM_API_KEY
-        settings.LLM_API_KEY = "test-api-key"
-        
-        service = LLMService()
-        
-        assert os.environ["GEMINI_API_KEY"] == settings.LLM_API_KEY
-        assert os.environ["GOOGLE_API_KEY"] == settings.LLM_API_KEY
-    finally:
-        # Restore original env vars
-        if original_gemini:
-            os.environ["GEMINI_API_KEY"] = original_gemini
-        if original_google:
-            os.environ["GOOGLE_API_KEY"] = original_google
+    # ORCHESTRATOR_MODEL defaults to "gemini/..." in Settings
+    model = service.get_adk_model(AgentRole.ORCHESTRATOR)
+    
+    assert isinstance(model, Gemini)
+    # The clean name should be the last part of the slash-separated string
+    expected_model = settings.ORCHESTRATOR_MODEL.split("/")[-1]
+    assert model.model == expected_model
 
 def test_get_adk_model_returns_correct_litellm_object():
-    service = LLMService()
-    settings = get_settings()
+    """Verifies that get_adk_model returns a LiteLlm instance for non-Google models."""
+    custom_settings = Settings(ORCHESTRATOR_MODEL="gpt-4o")
+    service = LLMService(settings=custom_settings)
     
     model = service.get_adk_model(AgentRole.ORCHESTRATOR)
     
     assert isinstance(model, LiteLlm)
-    assert model.model == settings.ORCHESTRATOR_MODEL
+    assert model.model == "gpt-4o"

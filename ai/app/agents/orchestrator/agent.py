@@ -1,0 +1,105 @@
+# ai/app/agents/orchestrator/agent.py
+from typing import Optional, Any
+from google.adk import Agent, Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.tools import FunctionTool
+from google.genai import types
+from app.services.llm_service import LLMService
+from app.models.enums import AgentRole
+from app.schemas.orchestrator import OrchestratorResponse
+from app.tools.echo import echo_message
+
+class OrchestratorAgent:
+    """
+    The primary routing and intent-parsing agent for Marka AI.
+    
+    This agent serves as the entry point for user interactions. It uses a 
+    hybrid tool-calling and structured-response pattern to:
+    1. Log the main user subject using the 'echo_message' tool.
+    2. Analyze the request using Chain-of-Thought (CoT) reasoning.
+    3. Route the user to the most appropriate specialized sub-agent.
+    """
+    def __init__(self, settings: Optional[Any] = None):
+        """
+        Initializes the Orchestrator agent with dependencies and configuration.
+        
+        Args:
+            settings: Configuration settings for dependency injection. 
+                     Passed to LLMService to configure the model.
+        """
+        self.llm_service = LLMService(settings=settings)
+        self.session_service = InMemorySessionService()
+
+        # HYBRID LOGIC CONFIGURATION:
+        # We combine FunctionTools with an output_schema. This allows the LLM 
+        # to first perform actions (logging) and then return a structured JSON 
+        # response for our application to parse.
+        self.agent = Agent(
+            name="Orchestrator",
+            model=self.llm_service.get_adk_model(AgentRole.ORCHESTRATOR),
+            tools=[FunctionTool(echo_message)],
+            instruction=(
+                "You are the Marka AI Orchestrator. Your job is to route user messages to the correct sub-agent.\n"
+                "1. First, extract the main subject of the user's message.\n"
+                "2. CALL the 'echo_message' tool with that subject to log it.\n"
+                "3. Only AFTER the tool returns, provide your final response using the schema.\n"
+                "Analyze the user's message in English in the 'thought_process' field first.\n"
+                "Then, pick the correct 'intent' from the AgentRole list.\n"
+                "Available intents:\n"
+                "- 'chatbot': Greetings, help, or casual chat.\n"
+                "- 'content': Requests to create posts, captions, or marketing content.\n"
+                "- 'rag': Specific questions about products or brand information.\n"
+                "If ambiguous, default to 'chatbot' and ask for more details."
+            ),
+            output_schema=OrchestratorResponse
+        )
+
+    async def parse_intent(self, user_text: str) -> OrchestratorResponse:
+        """
+        Invokes the agent to parse the user's intent from the provided text.
+        
+        Args:
+            user_text: The raw input message from the user.
+            
+        Returns:
+            OrchestratorResponse: The validated, structured JSON response.
+            
+        Raises:
+            ValueError: If the Orchestrator fails to produce a valid response 
+                       or if the JSON parsing of the structured output fails.
+        """
+        async with Runner(
+            app_name="MarkaAI",
+            agent=self.agent,
+            session_service=self.session_service,
+            auto_create_session=True
+        ) as runner:
+            
+            message = types.Content(
+                role="user", 
+                parts=[types.Part.from_text(text=user_text)]
+            )
+            
+            # Run the agent and iterate through response events.
+            # In a structured output scenario with output_schema, we expect 
+            # the final part of the response to be the JSON string.
+            async for event in runner.run_async(
+                user_id="internal_tester",
+                session_id="orchestrator_parse",
+                new_message=message
+            ):
+                # When output_schema is provided, ADK returns a text part containing 
+                # the JSON representation of the schema. 
+                # Note: We skip events that represent tool calls (which have no text).
+                if hasattr(event, 'content') and event.content.parts:
+                    raw_text = event.content.parts[0].text
+                    if not raw_text:
+                        continue
+                        
+                    try:
+                        # Use Pydantic's built-in JSON parsing to return the validated object
+                        return OrchestratorResponse.model_validate_json(raw_text)
+                    except Exception as e:
+                        raise ValueError(f"Orchestrator returned invalid JSON format: {str(e)}")
+            
+            raise ValueError("No valid structured response was generated by the Orchestrator agent.")
