@@ -1,7 +1,11 @@
 from typing import Union, Optional
+import os
+
+from google.adk.models import Gemini, LiteLlm
+
 from app.config import get_settings, Settings
 from app.models.enums import AgentRole
-from google.adk.models import Gemini, LiteLlm
+
 
 class LLMService:
     """Central provider for Large Language Model (LLM) instances across the application.
@@ -9,7 +13,7 @@ class LLMService:
     This service is responsible for providing correctly configured LLM instances
     based on the requested AgentRole and the application's configuration. It
     abstracts the selection logic between native Gemini implementations and
-    the LiteLlm fallback wrapper, ensuring optimal tool and schema support
+    the LiteLlm fallback wrapper, ensuring optimal tool/schema support
     when possible.
     """
 
@@ -21,7 +25,19 @@ class LLMService:
                 retrieved using the get_settings() utility.
         """
         self.settings = settings or get_settings()
-        
+        self._ensure_environment_keys()
+
+    def _ensure_environment_keys(self) -> None:
+        """Push the centralized LLM_API_KEY to env vars that ADK/LiteLLM expect.
+
+        Google ADK reads GEMINI_API_KEY or GOOGLE_API_KEY from the environment.
+        LiteLLM also uses these same variables. We map our single LLM_API_KEY
+        to both so the SDKs can find the key automatically.
+        """
+        if self.settings.LLM_API_KEY:
+            os.environ["GEMINI_API_KEY"] = self.settings.LLM_API_KEY
+            os.environ["GOOGLE_API_KEY"] = self.settings.LLM_API_KEY
+
     def get_adk_model(self, role: AgentRole) -> Union[Gemini, LiteLlm]:
         """Retrieves a configured ADK model instance for a specified role.
 
@@ -37,13 +53,13 @@ class LLMService:
             A configured instance of either Gemini or LiteLlm.
         """
         model_name = self.settings.get_model_for_role(role)
-        
+
         # If it's a gemini model, use the native ADK Gemini class for better tool support
         if "gemini" in model_name.lower():
             # Strip prefixes like 'gemini/' or 'google/' if present to ensure
             # compatibility with the ADK model parameter.
             clean_name = model_name.split("/")[-1]
-            return Gemini(model=clean_name, api_key=self.settings.LLM_API_KEY)
-            
+            return Gemini(model=clean_name)
+
         # For non-Google models, fallback to LiteLlm wrapper for multi-provider support
-        return LiteLlm(model=model_name, api_key=self.settings.LLM_API_KEY)
+        return LiteLlm(model=model_name)
