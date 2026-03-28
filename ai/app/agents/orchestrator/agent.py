@@ -2,28 +2,34 @@
 from typing import Optional
 from google.adk import Agent, Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk import Agent, Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.tools import FunctionTool
 from google.genai import types
-from app.config import get_settings, Settings
 from app.services.llm_service import LLMService
 from app.models.enums import AgentRole
 from app.schemas.orchestrator import OrchestratorResponse
+from app.tools.echo import echo_message
 
 class OrchestratorAgent:
     """
     The primary routing agent for Marka AI.
     Uses Gemini 3 Flash to parse intent via structured CoT.
     """
-    def __init__(self, settings: Optional[Settings] = None):
-        self.settings = settings or get_settings()
-        self.llm_service = LLMService(settings=self.settings)
+    def __init__(self, settings=None):
+        self.llm_service = LLMService(settings=settings)
         self.session_service = InMemorySessionService()
-        
-        # Configure the ADK Agent
+
+        # Configure the ADK Agent with a Hybrid (Tool + Pydantic) pattern
         self.agent = Agent(
             name="Orchestrator",
             model=self.llm_service.get_adk_model(AgentRole.ORCHESTRATOR),
+            tools=[FunctionTool(echo_message)],
             instruction=(
                 "You are the Marka AI Orchestrator. Your job is to route user messages to the correct sub-agent.\n"
+                "1. First, extract the main subject of the user's message.\n"
+                "2. CALL the 'echo_message' tool with that subject to log it.\n"
+                "3. Only AFTER the tool returns, provide your final response using the schema.\n"
                 "Analyze the user's message in English in the 'thought_process' field first.\n"
                 "Then, pick the correct 'intent' from the AgentRole list.\n"
                 "Available intents:\n"
@@ -32,7 +38,6 @@ class OrchestratorAgent:
                 "- 'rag': Specific questions about products or brand information.\n"
                 "If ambiguous, default to 'chatbot' and ask for more details."
             ),
-            # Force structured output using our schema
             output_schema=OrchestratorResponse
         )
 
