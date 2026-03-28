@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-29
+### Added
+- `ContentAgent` implementation for marketing email generation in Egyptian Arabic dialect.
+- `EmailStrategy` enum with 7 campaign types: promotional, newsletter, welcome, abandoned_cart, re_engagement, product_launch, seasonal.
+- `EmailPart`, `EmailRecipient`, `EmailSender`, `MarketingEmail` Pydantic schemas for structured email content.
+- `ContentResponse` schema with Chain-of-Thought reasoning and list of `MarketingEmail` objects.
+- Unit tests for email schema validation (13 tests).
+- Integration tests for ContentAgent email generation with real Gemini API (2 tests).
+- `AGENTS.md` with build, test, lint commands and code style guidelines for AI agents.
+- OpenCode context files, skills, and configuration.
+
+### Fixed
+- `LLMService` now sets `GEMINI_API_KEY` and `GOOGLE_API_KEY` environment variables for Google ADK compatibility. ADK reads API keys from env vars, not constructor parameters.
+
 ## [0.4.1] - 2026-03-27
 ### Changed
 - Integrated the `Settings` class project-wide using Dependency Injection.

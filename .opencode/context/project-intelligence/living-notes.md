@@ -70,23 +70,40 @@
 
 ### Lessons Learned
 - **NEVER hardcode git user.name/user.email** — Always use `gh api user` to get the authenticated GitHub identity. Use `git commit --amend --author="$(gh api user --jq '.login') <$(gh api user --jq '.login')@users.noreply.github.com>"` instead. The repo has no local git identity configured by design.
-- [Lesson 2] - [Context and implication]
+- **Google ADK reads API keys from env vars** — `GEMINI_API_KEY` or `GOOGLE_API_KEY` must be set in the environment. Passing `api_key` to the `Gemini()` constructor does NOT work. `LLMService._ensure_environment_keys()` handles this mapping from `LLM_API_KEY`.
 
 ## Patterns & Conventions
 
 ### Code Patterns Worth Preserving
-- [Pattern 1] - [Where it lives, why it's good]
-- [Pattern 2] - [Where it lives, why it's good]
+- **ADK Agent Pattern** — `LLMService` → `Agent(output_schema)` → `Runner` → `model_validate_json()`. See `technical-domain.md` for full template.
+- **Email Schema** — `ContentResponse` → `MarketingEmail` → `EmailPart` with `EmailStrategy` enum. Structured, typed, extensible.
+- **Settings DI** — All agents accept `settings=None`, default to `get_settings()`. Enables test injection.
 
 ### Gotchas for Maintainers
-- [Gotcha 1] - [What to watch out for]
-- [Gotcha 2] - [What to watch out for]
+- **ADK Gemini class** — Does NOT use `api_key` constructor param. Must set env vars before instantiation.
+- **LLMService lru_cache** — `get_settings()` is cached. If you change `.env`, you need to restart the process.
+- **Integration tests** — Require `LLM_API_KEY` in `.env`. Will fail without a valid Gemini API key.
 
 ## Active Projects
 
 | Project | Goal | Owner | Timeline |
 |---------|------|-------|----------|
-| [Project] | [What we're doing] | [Who owns it] | [When it matters] |
+| Sprint 2 — AI Layer | Build all 4 agents + LLM infra | Ahmed + Yomna | W3-5 |
+
+### Sprint 2 Status (2026-03-29)
+
+| Task | Description | Owner | Status |
+|------|-------------|-------|--------|
+| T009 | LLMService | Ahmed | ✅ Done |
+| T010 | LLM Provider Config | Ahmed | ✅ Done |
+| T011 | Orchestrator Agent | Ahmed | ✅ Done |
+| T013 | Content Agent | Ahmed | ✅ Done |
+| T015 | Agent Prompts Design | Ahmed | ❌ Blocked (needs T012+T014) |
+| T012 | RAG Agent | Yomna | ❌ Not started |
+| T014 | Chatbot Agent | Yomna | ❌ Not started |
+| T016 | Rate Limiting | Shared | ❌ Not started |
+
+**Ahmed's Sprint 2 is complete** (T009, T010, T011, T013). T015 blocked by Yomna.
 
 ## Archive (Resolved Items)
 
