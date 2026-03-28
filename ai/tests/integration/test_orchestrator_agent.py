@@ -1,7 +1,7 @@
 # ai/tests/integration/test_orchestrator_agent.py
 import pytest
 import os
-from app.agents.orchestrator import OrchestratorAgent
+from app.agents.orchestrator.agent import OrchestratorAgent
 from app.models.enums import AgentRole
 
 @pytest.mark.asyncio
