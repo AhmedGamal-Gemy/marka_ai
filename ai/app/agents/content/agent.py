@@ -6,23 +6,22 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from app.services.llm_service import LLMService
-from app.models.enums import AgentRole
+from app.models.enums import AgentRole, EmailStrategy
 from app.schemas.content import ContentResponse
 
 
 class ContentAgent:
-    """
-    Specialized content generation agent for Marka AI.
+    """Specialized content generation agent for Marka AI.
 
-    This agent produces marketing captions in Egyptian Arabic dialect
-    tailored for small and medium enterprises (SMEs). It uses Chain-of-Thought
-    reasoning to analyze the product description before generating exactly
-    3 engaging social media captions.
+    Produces marketing emails in Egyptian Arabic dialect tailored for
+    small and medium enterprises (SMEs). Uses Chain-of-Thought reasoning
+    to analyze the product and strategy before generating structured
+    email content with subject lines, body parts, and optional
+    sender/recipient personalization.
     """
 
     def __init__(self, settings: Optional[Any] = None) -> None:
-        """
-        Initializes the Content agent with dependencies and configuration.
+        """Initializes the Content agent with dependencies and configuration.
 
         Args:
             settings: Configuration settings for dependency injection.
@@ -36,30 +35,38 @@ class ContentAgent:
             model=self.llm_service.get_adk_model(AgentRole.CONTENT),
             instruction=(
                 "You are the Marka AI Content Agent. Your job is to generate "
-                "marketing captions for small and medium enterprises (SMEs).\n"
-                "1. Read the product description provided by the user.\n"
+                "marketing emails for small and medium enterprises (SMEs).\n"
+                "1. Read the product description and email strategy provided.\n"
                 "2. Think step by step in English about the product's key selling "
-                "points, target audience, and tone of voice. Write this reasoning "
-                "in the 'thought_process' field.\n"
-                "3. Generate exactly 3 marketing captions in Egyptian Arabic "
-                "dialect (colloquial Egyptian). Each caption should be engaging, "
-                "concise, and suitable for social media (Facebook, Instagram).\n"
+                "points, target audience, and appropriate email tone. Write this "
+                "reasoning in the 'thought_process' field.\n"
+                "3. Generate marketing emails in Egyptian Arabic dialect "
+                "(colloquial Egyptian). Each email must include:\n"
+                "   - A catchy subject line\n"
+                "   - A strategy type (promotional, newsletter, welcome, etc.)\n"
+                "   - Ordered parts: at least header, body, and call_to_action\n"
+                "   - Optional sender and recipient fields if relevant\n"
                 "4. Return the result using the structured output schema."
             ),
             output_schema=ContentResponse,
         )
 
-    async def generate_captions(self, product_description: str) -> ContentResponse:
-        """
-        Generates marketing captions for the given product description.
+    async def generate_email(
+        self,
+        product_description: str,
+        strategy: EmailStrategy = EmailStrategy.PROMOTIONAL,
+    ) -> ContentResponse:
+        """Generates marketing emails for the given product and strategy.
 
         Args:
             product_description: A description of the product or service
                                 to create marketing content for.
+            strategy: The email campaign strategy type (promotional,
+                     newsletter, welcome, etc.).
 
         Returns:
             ContentResponse: The validated response containing thought_process
-                            and a list of 3 Egyptian Arabic captions.
+                            and a list of MarketingEmail objects.
 
         Raises:
             ValueError: If the Content agent fails to produce a valid response
@@ -71,9 +78,10 @@ class ContentAgent:
             session_service=self.session_service,
             auto_create_session=True,
         ) as runner:
+            prompt = f"Product: {product_description}\nEmail Strategy: {strategy.value}"
             message = types.Content(
                 role="user",
-                parts=[types.Part.from_text(text=product_description)],
+                parts=[types.Part.from_text(text=prompt)],
             )
 
             async for event in runner.run_async(

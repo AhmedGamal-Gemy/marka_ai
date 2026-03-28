@@ -1,109 +1,220 @@
 import pytest
 from pydantic import ValidationError
-from app.schemas.content import ContentResponse
+
+from app.models.enums import EmailStrategy
+from app.schemas.content import (
+    ContentResponse,
+    EmailPart,
+    EmailRecipient,
+    EmailSender,
+    MarketingEmail,
+)
 
 
-def test_content_response_valid():
-    """Verify valid ContentResponse parses correctly with thought_process and 3 captions.
+# ---------------------------------------------------------------------------
+# EmailPart tests
+# ---------------------------------------------------------------------------
 
-    Arrange: Create a dict with thought_process and a list of 3 Egyptian Arabic captions.
-    Act: Instantiate ContentResponse with the valid data.
-    Assert: All fields are populated and captions list has exactly 3 items.
+
+def test_email_part_valid():
+    """Verify EmailPart parses correctly with role and content.
+
+    Arrange: Create a dict with role and content.
+    Act: Instantiate EmailPart.
+    Assert: Fields are populated correctly.
     """
-    # Arrange
-    data = {
-        "thought_process": "User wants marketing copy for a product. I will generate 3 captions.",
-        "captions": [
-            "جرب المنتج ده هيعجبك جداً!",
-            "أحسن عرض هتلاقيه هنا عندنا",
-            "اطلبه دلوقتي قبل ما يخلص!",
+    part = EmailPart(role="header", content="أهلاً بيك في عرضنا الجديد!")
+    assert part.role == "header"
+    assert part.content == "أهلاً بيك في عرضنا الجديد!"
+
+
+def test_email_part_missing_content():
+    """Verify EmailPart raises ValidationError when content is missing.
+
+    Arrange: Create a dict with only role.
+    Act & Assert: ValidationError is raised.
+    """
+    with pytest.raises(ValidationError):
+        EmailPart(role="body")
+
+
+# ---------------------------------------------------------------------------
+# EmailStrategy enum tests
+# ---------------------------------------------------------------------------
+
+
+def test_email_strategy_values():
+    """Verify all expected strategy types exist.
+
+    Arrange & Act: Check enum members.
+    Assert: All 7 strategy types are present.
+    """
+    expected = {
+        "promotional",
+        "newsletter",
+        "welcome",
+        "abandoned_cart",
+        "re_engagement",
+        "product_launch",
+        "seasonal",
+    }
+    assert {s.value for s in EmailStrategy} == expected
+
+
+def test_email_strategy_from_string():
+    """Verify EmailStrategy can be created from string value.
+
+    Arrange: A valid strategy string.
+    Act: Create enum from string.
+    Assert: Matches the correct enum member.
+    """
+    assert EmailStrategy("promotional") == EmailStrategy.PROMOTIONAL
+    assert EmailStrategy("seasonal") == EmailStrategy.SEASONAL
+
+
+# ---------------------------------------------------------------------------
+# MarketingEmail tests
+# ---------------------------------------------------------------------------
+
+
+def _make_valid_email() -> dict:
+    """Helper to build a valid MarketingEmail dict."""
+    return {
+        "subject": "عرض خاص بس ليوم!",
+        "strategy": "promotional",
+        "parts": [
+            {"role": "header", "content": "أهلاً بيك!"},
+            {"role": "body", "content": "عندنا عرض خاص على كل المنتجات."},
+            {"role": "call_to_action", "content": "اطلب دلوقتي!"},
         ],
     }
 
-    # Act
-    response = ContentResponse(**data)
 
-    # Assert
-    assert response.thought_process == data["thought_process"]
-    assert len(response.captions) == 3
-    assert response.captions == data["captions"]
+def test_marketing_email_valid():
+    """Verify a complete MarketingEmail parses correctly.
 
-
-def test_content_response_captions_list():
-    """Verify captions field is a list of strings.
-
-    Arrange: Create a ContentResponse with a list of string captions.
-    Act: Instantiate the model.
-    Assert: captions is a list and every element is a str.
+    Arrange: A valid email dict with subject, strategy, and parts.
+    Act: Instantiate MarketingEmail.
+    Assert: All fields populated, parts list has 3 items.
     """
-    # Arrange
-    data = {
-        "thought_process": "Generating captions.",
-        "captions": ["caption one", "caption two", "caption three"],
-    }
-
-    # Act
-    response = ContentResponse(**data)
-
-    # Assert
-    assert isinstance(response.captions, list)
-    assert all(isinstance(c, str) for c in response.captions)
+    email = MarketingEmail(**_make_valid_email())
+    assert email.subject == "عرض خاص بس ليوم!"
+    assert email.strategy == EmailStrategy.PROMOTIONAL
+    assert len(email.parts) == 3
+    assert email.parts[0].role == "header"
+    assert email.to is None
+    assert email.sender is None
 
 
-def test_content_response_invalid_missing_field():
-    """Verify ValidationError is raised when a required field is missing.
+def test_marketing_email_with_recipient_and_sender():
+    """Verify optional to and sender fields parse correctly.
 
-    Arrange: Create a dict missing the required 'captions' field.
-    Act: Attempt to instantiate ContentResponse.
-    Assert: pydantic.ValidationError is raised.
+    Arrange: Email dict with recipient and sender added.
+    Act: Instantiate MarketingEmail.
+    Assert: to and sender are populated with correct types.
     """
-    # Arrange
-    incomplete_data = {
-        "thought_process": "Some reasoning without captions.",
-    }
+    data = _make_valid_email()
+    data["to"] = {"name": "أحمد", "email": "ahmed@example.com"}
+    data["sender"] = {"name": "ماركاي", "email": "hello@marka.ai"}
 
-    # Act & Assert
+    email = MarketingEmail(**data)
+    assert isinstance(email.to, EmailRecipient)
+    assert email.to.name == "أحمد"
+    assert isinstance(email.sender, EmailSender)
+    assert email.sender.name == "ماركاي"
+
+
+def test_marketing_email_optional_fields_default_none():
+    """Verify to and sender default to None when omitted.
+
+    Arrange: Email dict without to/sender.
+    Act: Instantiate MarketingEmail.
+    Assert: to and sender are None.
+    """
+    email = MarketingEmail(**_make_valid_email())
+    assert email.to is None
+    assert email.sender is None
+
+
+def test_marketing_email_invalid_strategy():
+    """Verify invalid strategy string raises ValidationError.
+
+    Arrange: Email dict with an unknown strategy value.
+    Act & Assert: ValidationError is raised.
+    """
+    data = _make_valid_email()
+    data["strategy"] = "unknown_strategy"
     with pytest.raises(ValidationError):
-        ContentResponse(**incomplete_data)
+        MarketingEmail(**data)
 
 
-def test_content_response_empty_captions():
-    """Verify ContentResponse accepts an empty captions list as valid edge case.
+def test_marketing_email_missing_subject():
+    """Verify missing subject raises ValidationError.
 
-    Arrange: Create a dict with an empty captions list.
-    Act: Instantiate ContentResponse.
-    Assert: Model parses successfully and captions is an empty list.
+    Arrange: Email dict without subject.
+    Act & Assert: ValidationError is raised.
     """
-    # Arrange
-    data = {
-        "thought_process": "No captions generated.",
-        "captions": [],
+    data = _make_valid_email()
+    del data["subject"]
+    with pytest.raises(ValidationError):
+        MarketingEmail(**data)
+
+
+# ---------------------------------------------------------------------------
+# ContentResponse tests
+# ---------------------------------------------------------------------------
+
+
+def _make_valid_response() -> dict:
+    """Helper to build a valid ContentResponse dict."""
+    return {
+        "thought_process": "User wants a promotional email for a new watch.",
+        "emails": [_make_valid_email()],
     }
 
-    # Act
-    response = ContentResponse(**data)
 
-    # Assert
-    assert response.captions == []
-    assert len(response.captions) == 0
+def test_content_response_valid():
+    """Verify ContentResponse parses with thought_process and emails list.
 
-
-def test_content_response_single_caption():
-    """Verify ContentResponse parses correctly with a single caption.
-
-    Arrange: Create a dict with thought_process and exactly 1 caption.
+    Arrange: A valid response dict with one email.
     Act: Instantiate ContentResponse.
-    Assert: Model parses successfully and captions list has 1 item.
+    Assert: thought_process and emails are populated.
     """
-    # Arrange
-    data = {
-        "thought_process": "User asked for just one caption.",
-        "captions": ["منتج ممتاز بسعر حلو"],
-    }
+    response = ContentResponse(**_make_valid_response())
+    assert len(response.thought_process) > 0
+    assert len(response.emails) == 1
+    assert isinstance(response.emails[0], MarketingEmail)
 
-    # Act
+
+def test_content_response_multiple_emails():
+    """Verify ContentResponse accepts multiple email options.
+
+    Arrange: Response with 3 different emails.
+    Act: Instantiate ContentResponse.
+    Assert: All 3 emails are present.
+    """
+    data = _make_valid_response()
+    data["emails"] = [_make_valid_email() for _ in range(3)]
     response = ContentResponse(**data)
+    assert len(response.emails) == 3
 
-    # Assert
-    assert len(response.captions) == 1
-    assert response.captions[0] == "منتج ممتاز بسعر حلو"
+
+def test_content_response_missing_emails():
+    """Verify missing emails field raises ValidationError.
+
+    Arrange: Response dict without emails.
+    Act & Assert: ValidationError is raised.
+    """
+    with pytest.raises(ValidationError):
+        ContentResponse(thought_process="some reasoning")
+
+
+def test_content_response_empty_emails():
+    """Verify ContentResponse accepts empty emails list.
+
+    Arrange: Response with empty emails list.
+    Act: Instantiate ContentResponse.
+    Assert: emails is an empty list.
+    """
+    response = ContentResponse(thought_process="No emails.", emails=[])
+    assert response.emails == []
