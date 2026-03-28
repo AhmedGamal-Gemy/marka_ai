@@ -5,9 +5,9 @@ from app.agents.orchestrator import OrchestratorAgent
 from app.models.enums import AgentRole
 
 @pytest.mark.asyncio
-async def test_orchestrator_routing_logic():
-    # API Key is pulled automatically from .env via get_settings() in the agent
-    agent = OrchestratorAgent()
+async def test_orchestrator_routing_logic(settings):
+    # API Key is pulled automatically from settings fixture
+    agent = OrchestratorAgent(settings=settings)
     
     # Test case: Content generation intent
     result = await agent.parse_intent("عايز أعمل بوست للساعة الجديدة")

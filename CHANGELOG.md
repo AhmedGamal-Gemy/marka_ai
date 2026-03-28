@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-03-27
+### Changed
+- Integrated the `Settings` class project-wide using Dependency Injection.
+- Refactored `LLMService` and `OrchestratorAgent` to accept `Settings` via constructor.
+- Centralized test configuration using a session-scoped Pytest fixture in `conftest.py`.
+- Updated `FastAPI` main application to utilize the unified `Settings` class.
+- Explicitly pass API key to `LiteLlm` constructor per Google ADK best practices.
+
 ## [0.4.0] - 2026-03-27
 ### Added
 - `OrchestratorAgent` implementation using Google ADK.

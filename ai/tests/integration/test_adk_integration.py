@@ -8,12 +8,12 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 @pytest.mark.asyncio
-async def test_agent():
+async def test_agent(settings):
     print("--- 1. Testing Environment ---")
-    # API Key is pulled automatically from .env via get_settings()
+    # API Key is pulled automatically from settings fixture
     
     print("--- 2. Initializing LLM Service ---")
-    service = LLMService()
+    service = LLMService(settings=settings)
     
     print("--- 3. Fetching Orchestrator Model ---")
     model = service.get_adk_model(AgentRole.ORCHESTRATOR)

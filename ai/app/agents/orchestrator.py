@@ -1,7 +1,9 @@
 # ai/app/agents/orchestrator.py
+from typing import Optional
 from google.adk import Agent, Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+from app.config import get_settings, Settings
 from app.services.llm_service import LLMService
 from app.models.enums import AgentRole
 from app.schemas.orchestrator import OrchestratorResponse
@@ -11,8 +13,9 @@ class OrchestratorAgent:
     The primary routing agent for Marka AI.
     Uses Gemini 3 Flash to parse intent via structured CoT.
     """
-    def __init__(self):
-        self.llm_service = LLMService()
+    def __init__(self, settings: Optional[Settings] = None):
+        self.settings = settings or get_settings()
+        self.llm_service = LLMService(settings=self.settings)
         self.session_service = InMemorySessionService()
         
         # Configure the ADK Agent
