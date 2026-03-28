@@ -8,14 +8,12 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 @pytest.mark.asyncio
-async def test_agent():
-    print("--- 1. Forcing Environment Variables ---")
-    os.environ["LLM_API_KEY"] = "AIzaSyAuAqQ6Y9ipMEqiukyfqCWprDT5H22NjNs"
-    os.environ["GEMINI_API_KEY"] = "AIzaSyAuAqQ6Y9ipMEqiukyfqCWprDT5H22NjNs"
-    os.environ["ORCHESTRATOR_MODEL"] = "gemini/gemini-3-flash-preview"
+async def test_agent(settings):
+    print("--- 1. Testing Environment ---")
+    # API Key is pulled automatically from settings fixture
     
     print("--- 2. Initializing LLM Service ---")
-    service = LLMService()
+    service = LLMService(settings=settings)
     
     print("--- 3. Fetching Orchestrator Model ---")
     model = service.get_adk_model(AgentRole.ORCHESTRATOR)
